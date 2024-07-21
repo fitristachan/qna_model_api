@@ -1,4 +1,4 @@
 Flask
 transformers
-pytorch
+torch
 logging
