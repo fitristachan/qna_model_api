@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from qna_pipeline import ask_question 
+from deploy.qna_pipeline import ask_question 
 import logging
 
 contexts = [
