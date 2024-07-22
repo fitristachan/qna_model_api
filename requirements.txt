@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 Flask==3.0.3
 transformers==4.42.4 
 torch==2.3.1
 logging
 aiohttp==3.9.5
+=======
+Flask
+transformers
+torch
+logging
+>>>>>>> parent of 6846734 (fix)
