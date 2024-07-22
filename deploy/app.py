@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+import asyncio
+import aiohttp
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
+from flask import Flask, request, jsonify
 import logging
-
 
 # CONTEXTS
 contexts = [
@@ -9,32 +10,44 @@ contexts = [
   {'id': 2, 'context': 'Context 2'},
 ]
 
+# Function to download and load the model from a remote URL asynchronously
+async def fetch(session, url):
+    async with session.get(url) as response:
+        return await response.read()
 
-# LOAD MODEL USING TRANSFORMERS LIBRARY
-def load_qna_model():
+async def load_model_from_url(model_url, tokenizer_url):
     try:
-        tokenizer = AutoTokenizer.from_pretrained("indolem/indobert-base-uncased")
-        model = AutoModelForQuestionAnswering.from_pretrained("indolem/indobert-base-uncased")
-        pipe = pipeline("question-answering", model=model, tokenizer=tokenizer)
-        return tokenizer, model, pipe
+        async with aiohttp.ClientSession() as session:
+            model_task = asyncio.create_task(fetch(session, model_url))
+            tokenizer_task = asyncio.create_task(fetch(session, tokenizer_url))
+
+            model_data = await model_task
+            tokenizer_data = await tokenizer_task
+
+            # Save model and tokenizer to disk
+            with open('model.bin', 'wb') as model_file:
+                model_file.write(model_data)
+            
+            with open('tokenizer.json', 'wb') as tokenizer_file:
+                tokenizer_file.write(tokenizer_data)
+
+            tokenizer = AutoTokenizer.from_pretrained('tokenizer.json')
+            model = AutoModelForQuestionAnswering.from_pretrained('model.bin')
+            pipe = pipeline("question-answering", model=model, tokenizer=tokenizer)
+            return tokenizer, model, pipe
     except (ImportError, OSError) as e:
-        logging.error(f"Error loading QnA model: {e}")
+        logging.error(f"Error loading QnA model from URL: {e}")
         return None, None, None
 
-def ask_question(question: str, context: str):
-    tokenizer, model, pipe = load_qna_model()
-    if not tokenizer or not model or not pipe:
-        return {"error": "No QnA model found"}
+# Load model asynchronously at startup
+async def initialize_model():
+    global tokenizer, model, pipe
+    tokenizer, model, pipe = await load_model_from_url('model_url', 'tokenizer_url')
 
-    result = pipe(question=question, context=context)
-    return result
-
-
-
-# FLASK API
+# Flask API
 app = Flask(__name__)
 
-logging.basicConfig(level=logging.DEBUG) 
+logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/')
 def index():
@@ -56,9 +69,11 @@ def get_answer(context_id):
         logging.error(f"Invalid context ID: {context_id}")
         return jsonify({'error': 'Invalid context ID'}), 400
 
-    return jsonify(ask_question(question=question, context=context['context']))
+    result = pipe(question=question, context=context['context'])
+    return jsonify(result)
 
 if __name__ == "__main__":
+    # Initialize the model asynchronously
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(initialize_model())
     app.run(debug=True)
-
-
