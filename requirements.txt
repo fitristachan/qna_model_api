@@ -5,4 +5,3 @@ logging
 aiohttp==3.9.5
 gunicorn
 Werkzeug
-gunicorn
