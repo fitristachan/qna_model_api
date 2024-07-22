@@ -20,8 +20,8 @@ def load_qna_model():
         logging.error(f"Error loading QnA model: {e}")
         return None, None, None
 
+tokenizer, model, pipe = load_qna_model()
 def ask_question(question: str, context: str):
-    tokenizer, model, pipe = load_qna_model()
     if not tokenizer or not model or not pipe:
         return {"error": "No QnA model found"}
 
