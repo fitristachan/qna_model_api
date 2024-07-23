@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
-import logging
+# import logging
 
 
 contexts = [
@@ -17,7 +17,7 @@ def load_qna_model():
         pipe = pipeline("question-answering", model=model, tokenizer=tokenizer)
         return tokenizer, model, pipe
     except (ImportError, OSError) as e:
-        logging.error(f"Error loading QnA model: {e}")
+        # logging.error(f"Error loading QnA model: {e}")
         return None, None, None
 
 tokenizer, model, pipe = load_qna_model()
@@ -33,26 +33,26 @@ def ask_question(question: str, context: str):
 # FLASK API
 app = Flask(__name__)
 
-logging.basicConfig(level=logging.DEBUG) 
+# logging.basicConfig(level=logging.DEBUG) 
 
 @app.route('/')
 def index():
     """Liveness check for the service"""
-    return jsonify({"status": "SUCCESS"}), 204
+    return jsonify({"status": "Kelompok 2"}), 204
 
 @app.route('/qna/<int:context_id>', methods=['GET'])
 def get_answer(context_id):
     question = request.args.get('question', type=str)
 
     if question is None:
-        logging.error("Missing question in request")
+        # logging.error("Missing question in request")
         return jsonify({'error': 'Missing question in request'}), 400
 
-    logging.debug(f"Received context ID: {context_id}")
+    # logging.debug(f"Received context ID: {context_id}")
     context = next((ctx for ctx in contexts if ctx['id'] == context_id), None)
 
     if not context:
-        logging.error(f"Invalid context ID: {context_id}")
+        # logging.error(f"Invalid context ID: {context_id}")
         return jsonify({'error': 'Invalid context ID'}), 400
 
     return jsonify(ask_question(question=question, context=context['context']))
