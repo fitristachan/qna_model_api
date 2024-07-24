@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
 def load_qna_model():
     try:
         tokenizer = AutoTokenizer.from_pretrained("indolem/indobert-base-uncased")
-        model = AutoModelForQuestionAnswering.from_pretrained("indolem/indobert-base-uncased")
+        model = AutoModelForQuestionAnswering.from_pretrained("arrei/question-answering-uas")
         pipe = pipeline("question-answering", model=model, tokenizer=tokenizer)
         return tokenizer, model, pipe
     except (ImportError, OSError) as e:
