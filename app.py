@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
+import re
 # import logging
 
 # LOAD MODEL USING TRANSFORMERS LIBRARY
@@ -46,7 +47,15 @@ def get_answer():
         # logging.error("Missing context in request")
         return jsonify({'error': 'Missing context in request'}), 400
 
-    return jsonify(ask_question(question=question, context=context))
+
+    results = ask_question(question=question, context=context)
+
+    r = results['answer']
+    r = r.strip()
+    r = re.sub(r'[^\w\s]', '', r)
+    results['answer'] = r
+
+    return jsonify(results)
 
 if __name__ == "__main__":
     app.run(debug=True)
